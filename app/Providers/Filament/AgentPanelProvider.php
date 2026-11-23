@@ -10,6 +10,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Illuminate\Support\Facades\Vite;
 use App\Filament\Agent\Pages\Auth\Login;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -42,6 +43,12 @@ class AgentPanelProvider extends PanelProvider
                 \App\Filament\Agent\Widgets\RevenueChart::class,
                 \App\Filament\Agent\Widgets\RecentCustomers::class,
             ])
+            ->renderHook(
+                'panels::head.end',
+                fn (): string => Vite::withEntryPoints([
+                    'resources/js/app.js',
+                ])->toHtml(),
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
