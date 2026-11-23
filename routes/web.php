@@ -27,11 +27,21 @@ Route::get('/calendar-events', function (Request $request) {
         ->whereKey($filters['agent'])
         ->first(['id', 'is_active']);
 
-    abort_unless(
-        $agent && ($agent->is_active || $request->user()?->hasRole('Admin')),
-        404,
-        'The selected agent is unavailable.'
-    );
+    if (! $request->user()?->hasRole('Admin')) {
+        abort_unless(
+            $agent
+            && $agent->is_active
+            && $request->user()?->is($agent),
+            404,
+            'The selected agent is unavailable.'
+        );
+    } else {
+        abort_unless(
+            $agent,
+            404,
+            'The selected agent is unavailable.'
+        );
+    }
 
     $customers = Customer::query()
         ->whereBetween('booking_date', [$filters['start'], $filters['end']])
@@ -52,6 +62,7 @@ Route::get('/calendar-events', function (Request $request) {
                 'count' => 0,
                 'amount' => 0,
                 'statuses' => [],
+                'states' => [],
                 'backgroundColor' => '#16a34a',
                 'borderColor' => '#16a34a',
                 'textColor' => '#ffffff',
@@ -60,6 +71,11 @@ Route::get('/calendar-events', function (Request $request) {
 
         $eventsByDate[$date]['count']++;
         $eventsByDate[$date]['amount'] += $customer->price;
+
+        $state = trim((string) $customer->state);
+        if ($state !== '' && !in_array($state, $eventsByDate[$date]['states'], true)) {
+            $eventsByDate[$date]['states'][] = $state;
+        }
 
         // Determine shipment status for this customer
         $status = null;

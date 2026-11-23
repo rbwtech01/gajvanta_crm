@@ -44,7 +44,9 @@ class OrderCalendar extends Page
             ->orderBy('name');
 
         if (! auth()->user()?->hasRole('Admin')) {
-            $query->where('is_active', true);
+            $query
+                ->whereKey(auth()->id())
+                ->where('is_active', true);
         }
 
         return $query->get(['id', 'name']);
