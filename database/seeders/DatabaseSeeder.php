@@ -1,0 +1,27 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use Database\Seeders\AdminUserSeeder;
+use Database\Seeders\RoleSeeder;
+use Database\Seeders\OperationManagerSeeder;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    use WithoutModelEvents;
+
+    /**
+     * Seed the application's database.
+     */
+    public function run(): void
+    {
+        $this->call([
+            RoleSeeder::class,
+            AdminUserSeeder::class,
+            OperationManagerSeeder::class,
+        ]);
+    }
+}
