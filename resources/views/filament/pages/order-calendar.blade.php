@@ -177,6 +177,7 @@
     </style>
 
     <div class="order-calendar-content">
+        @if(auth()->user()?->hasRole('Admin'))
         <div id="agent-selector-wrapper">
             <label for="agent-selector">
                 Select Agent
@@ -192,6 +193,7 @@
                 @endforelse
             </select>
         </div>
+        @endif
 
         <div id="monthly-summary" aria-live="polite">
             <div class="monthly-summary-card">
@@ -232,17 +234,19 @@
                     window.history.replaceState({}, '', currentUrl);
                 }
 
-                agentSelector.addEventListener('change', function() {
-                    const nextUrl = new URL(window.location.href);
+                if (agentSelector) {
+                    agentSelector.addEventListener('change', function() {
+                        const nextUrl = new URL(window.location.href);
 
-                    if (agentSelector.value) {
-                        nextUrl.searchParams.set('agent', agentSelector.value);
-                    } else {
-                        nextUrl.searchParams.delete('agent');
-                    }
+                        if (agentSelector.value) {
+                            nextUrl.searchParams.set('agent', agentSelector.value);
+                        } else {
+                            nextUrl.searchParams.delete('agent');
+                        }
 
-                    window.location.assign(nextUrl);
-                });
+                        window.location.assign(nextUrl);
+                    });
+                }
 
                 let events = [];
 
@@ -265,6 +269,7 @@
                 const orderCounts = {};
                 const orderAmounts = {};
                 const orderStatuses = {};
+                const orderStates = {};
 
                 events.forEach(event => {
 
@@ -272,6 +277,7 @@
                     orderCounts[event.start] = event.count;
                     orderAmounts[event.start] = event.amount;
                     orderStatuses[event.start] = event.statuses || [];
+                    orderStates[event.start] = event.states || [];
 
                 });
 
@@ -413,6 +419,11 @@
                                         badgeContent += `<br>${statusLines}`;
                                     }
 
+                                    const states = orderStates[date] || [];
+                                    if (states.length > 0) {
+                                        badgeContent += `<br>📍 ${states.join(', ')}`;
+                                    }
+
                                     badge.innerHTML = badgeContent;
 
                                     frame.appendChild(badge);
@@ -433,7 +444,12 @@
                             return;
                         }
 
-                        const orderListUrl = new URL('/crm/orders-by-date', window.location.origin);
+                        const orderListPath = @js(
+                            filament()->getCurrentPanel()?->getId() === 'agent'
+                                ? '/agent/orders-by-date'
+                                : '/crm/orders-by-date'
+                        );
+                        const orderListUrl = new URL(orderListPath, window.location.origin);
                         orderListUrl.searchParams.set('date', info.dateStr);
                         orderListUrl.searchParams.set('agent', String(agent));
 
